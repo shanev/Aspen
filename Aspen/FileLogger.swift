@@ -41,11 +41,11 @@ public class FileLogger: NSObject, LogInterface
         
         let fm = NSFileManager.defaultManager()
         let urls = fm.URLsForDirectory(.LibraryDirectory, inDomains: .UserDomainMask)
-        if let url = urls.last as? NSURL, p = url.path, path = NSURL.fileURLWithPath("\(p)/Logs/\(dateString).log")
-        {
-            fileURL = path
-            openFile()
-        }
+        let url = urls.last
+        let p = url!.path
+        let path = NSURL.fileURLWithPath("\(p)/Logs/\(dateString).log")
+        fileURL = path
+        openFile()
     }
     
     deinit
@@ -73,12 +73,20 @@ public class FileLogger: NSObject, LogInterface
         {
             if fm.fileExistsAtPath(filePath) == false
             {
-                fm.createDirectoryAtURL(URL.URLByDeletingLastPathComponent!, withIntermediateDirectories: true, attributes: nil, error: nil)
+                do {
+                    try fm.createDirectoryAtURL(URL.URLByDeletingLastPathComponent!, withIntermediateDirectories: true, attributes: nil)
+                } catch _ {
+                }
                 fm.createFileAtPath(filePath, contents: nil, attributes: nil)
             }
             
             var fileHandleError:NSError?
-            fileHandle = NSFileHandle(forWritingToURL: URL, error: &fileHandleError)
+            do {
+                fileHandle = try NSFileHandle(forWritingToURL: URL)
+            } catch let error as NSError {
+                fileHandleError = error
+                fileHandle = nil
+            }
         }
     }
     
